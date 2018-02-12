@@ -7,6 +7,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -63,7 +65,7 @@ public class LoginValidation extends HttpServlet {
 	      String pass = request.getParameter("pass");
 	      Statement stmt = null;
 	      Connection conn= null;
-	      
+	  	PreparedStatement pstmt = null;
 	      try {
 	          // Register JDBC driver
 	          Class.forName("com.mysql.jdbc.Driver");
@@ -82,8 +84,7 @@ public class LoginValidation extends HttpServlet {
 	             //Retrieve by column name
 	              String userid = rs.getString("userid");
 	             String password = rs.getString("password");
-	             System.out.println(userid);
-	             System.out.println(password);
+	            
 	             //Display values
 	          if(user.equals(userid)&& pass.equals(password)){
 	        	  flag= 1;
@@ -94,9 +95,49 @@ public class LoginValidation extends HttpServlet {
 	          
 	          if(flag == 1)
 	          {
-	        	  System.out.println("here");
+	        	  List<Todo> demoNames = new ArrayList<Todo> ();
+	        
+	        	  sql = "SELECT title, completed , date_time FROM todo where id="+ "?";
+	        	  pstmt = (PreparedStatement) conn.prepareStatement(sql);
+	        	  pstmt.setString(1, user);
+	        	  rs = pstmt.executeQuery();
+	        	  
+	        	  System.out.println(rs);
+	        	 
+	        	  while(rs.next()){
+	        		  Todo d1 = new Todo();
+		              d1.setTodo(rs.getString("title"));
+		              d1.setStatus(rs.getInt("completed")==1 ? "Completed": "Active");
+		              d1.setDatetime(String.valueOf(rs.getTimestamp("date_time")));
+		              
+		              d1.setTimeremaining("30 seconds");
+		              demoNames.add(d1);
+		              System.out.println(d1.getTodo());
+		              System.out.println(d1.getStatus());
+		              System.out.println(d1.getDatetime());
+	        	  }
+	        	/*  Todo d1 = new Todo();
+	              d1.setTodo("Shopping");
+	              d1.setDatetime("2017-08-09;08:00am");
+	              d1.setTimeremaining("30 seconds");
+	              Todo d2 = new Todo();
+	              d2.setTodo("HomeWork");
+	              d2.setDatetime("2017-08-09;08:00am");
+	              d2.setTimeremaining("30 seconds");
+	              Todo d3  = new Todo();
+	              d3.setTodo("Project ");
+	              d3.setDatetime("2017-08-09;08:00am");
+	              d3.setTimeremaining("30 seconds");
+	              
+	              demoNames.add(d1);
+	              demoNames.add(d2);
+	              demoNames.add(d3);*/
+	        	  request.setAttribute("name", user);
+	              request.setAttribute("demoNames", demoNames);
+	              
+	        	  
 	        	  ServletContext sc = getServletContext();
-	          sc.getRequestDispatcher("/view.html").forward(request, response);
+	          sc.getRequestDispatcher("/view.jsp").forward(request, response);
 	          }
 	          else
 	          {
@@ -106,6 +147,7 @@ public class LoginValidation extends HttpServlet {
 
 	          // Clean-up environment
 	          rs.close();
+	          pstmt.close();
 	          stmt.close();
 	          conn.close();
 	       } catch(SQLException se) {
